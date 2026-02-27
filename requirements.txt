@@ -1,0 +1,5 @@
+click
+rich
+gitpython
+openai
+python-dotenv
