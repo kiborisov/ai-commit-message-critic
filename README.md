@@ -4,6 +4,15 @@ A terminal tool that uses AI to review your git commit messages — like having 
 
 Point it at any repo (local or remote) and it scores every commit, calls out the lazy ones, and explains why the good ones work. It can also read your staged changes and write the commit message for you.
 
+### Quickstart
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env        # add your OpenRouter key
+python commit_critic.py --analyze
+```
+
 ## Why?
 
 Bad commit messages are tech debt nobody talks about. When something breaks at 2am and you're running `git bisect`, the difference between `"fix bug"` and `"fix(auth): resolve token expiration causing silent logouts"` is the difference between a 10-minute fix and a 2-hour investigation.
@@ -12,38 +21,83 @@ This tool makes that visible.
 
 ## Getting Started
 
-```bash
-# 1. Set up the environment
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+### Prerequisites
 
-# 2. Add your API key (get one at https://openrouter.ai/keys)
-cp .env.example .env
-# Edit .env and paste your OpenRouter key
+- **Python 3.11+** — check with `python3 --version`
+- **git** — installed and available on your PATH
+- **OpenRouter account** — sign up at [openrouter.ai](https://openrouter.ai) and grab an API key from [openrouter.ai/keys](https://openrouter.ai/keys)
 
-# 3. Analyze a repo
-python commit_critic.py --analyze
-```
+### Step-by-step setup
 
-That's it. Three steps.
+1. **Clone the repo** (skip if you already have it):
+   ```bash
+   git clone https://github.com/your-user/ai_commit_message_challenge.git
+   cd ai_commit_message_challenge
+   ```
+
+2. **Create a virtual environment and install dependencies:**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. **Configure your API key:**
+   ```bash
+   cp .env.example .env
+   ```
+   Then edit `.env` so it looks like this:
+   ```
+   OPENROUTER_API_KEY=sk-or-v1-abc123...your-key-here
+   ```
+
+4. **Verify it works:**
+   ```bash
+   python commit_critic.py --analyze
+   ```
+   You should see your repo's last 50 commits scored and grouped.
 
 ## Usage
 
-**Analyze the current repo's last 50 commits:**
+### Analyze the current repo
+
+Score the last 50 commits in whatever repo you're currently in:
+
 ```bash
 python commit_critic.py --analyze
 ```
 
-**Analyze any public repo by URL:**
+### Analyze a remote repo
+
+Point it at any public GitHub repo — it clones temporarily and analyzes:
+
 ```bash
 python commit_critic.py --analyze --url="https://github.com/steel-dev/steel-browser"
 ```
 
-**Let AI write your next commit message:**
+### Let AI write your commit message
+
+Stage your changes first, then let the tool generate a conventional commit message. You can accept the suggestion or type your own — either way, it commits for you.
+
 ```bash
 git add .
 python commit_critic.py --write
+```
+
+The flow:
+1. Stage files with `git add`
+2. Run `--write` — the tool reads your diff and suggests a message
+3. Press **Enter** to accept, or type your own message
+4. The tool commits with the chosen message
+
+If you have no staged changes, you'll see: `No staged changes found. Stage files with git add first.`
+
+### Swapping models
+
+By default the tool uses `google/gemini-2.5-flash`. To use a different model, set `COMMIT_CRITIC_MODEL` in your `.env` file to any model ID from [OpenRouter's catalog](https://openrouter.ai/models):
+
+```
+COMMIT_CRITIC_MODEL=anthropic/claude-sonnet-4
 ```
 
 ## Example: Analyzing Steel Browser
@@ -122,6 +176,17 @@ Reads your `git diff --staged`, figures out what you changed, and suggests a wel
 |----------|---------|-------------|
 | `OPENROUTER_API_KEY` | *(required)* | Your API key from [OpenRouter](https://openrouter.ai/keys) |
 | `COMMIT_CRITIC_MODEL` | `google/gemini-2.5-flash` | Any model ID from [OpenRouter's catalog](https://openrouter.ai/models) |
+
+## Troubleshooting
+
+**`Error: OPENROUTER_API_KEY not set.`**
+Your `.env` file is missing or doesn't contain the key. Run `cp .env.example .env` and paste your API key from [openrouter.ai/keys](https://openrouter.ai/keys).
+
+**`No staged changes found. Stage files with git add first.`**
+You ran `--write` without staging anything. Run `git add <files>` first, then try again.
+
+**Python version errors or unexpected syntax issues**
+This project requires Python 3.11+. Check your version with `python3 --version`. If you're on an older version, consider using [pyenv](https://github.com/pyenv/pyenv) to install a newer one.
 
 ## Tech Stack
 
